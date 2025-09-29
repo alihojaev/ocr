@@ -1,0 +1,23 @@
+# Exclude VCS and caches
+.git
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Editor temp files
+*.swp
+*.swo
+
+# Large media not needed for build
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.ipynb
+
+# Misc
+node_modules
+*.egg-info
+.DS_Store

@@ -10,8 +10,6 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         python3 \
         python3-pip \
-        git \
-        wget \
         ca-certificates \
         libgl1 \
         libgomp1 \
@@ -23,8 +21,9 @@ RUN apt-get update \
 
 WORKDIR /workspace
 
-# Upgrade pip first
-RUN python3 -m pip install --upgrade pip
+# Upgrade pip first and set wheels cache dir
+ENV PIP_NO_CACHE_DIR=1
+RUN python3 -m pip install --upgrade pip setuptools wheel
 
 # Install PaddlePaddle GPU build (CUDA 12.6) per docs
 # https://www.paddleocr.ai/latest/en/version3.x/installation.html
@@ -32,6 +31,7 @@ RUN python3 -m pip install --no-cache-dir paddlepaddle-gpu==3.0.0 -i https://www
 
 # Copy requirements and install remaining deps
 COPY requirements.txt /workspace/requirements.txt
+# Install requirements first to leverage Docker layer cache; then copy app
 RUN python3 -m pip install --no-cache-dir -r /workspace/requirements.txt
 
 # Copy application files
