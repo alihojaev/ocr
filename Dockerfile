@@ -44,14 +44,21 @@ RUN chmod +x /workspace/start.sh
 # Pre-download PaddleOCR models to avoid cold-start download in serverless
 RUN python3 - << 'PY'
 from paddleocr import PaddleOCR
-langs = ["korean", "en"]
+import numpy as np
+
+# Preload popular manga languages to bake weights into the image
+langs = ["japan", "korean", "ch", "chinese_cht", "en"]
+dummy = np.zeros((64, 64, 3), dtype=np.uint8)
+
 for lang in langs:
     try:
-        print(f"Preloading PaddleOCR models for lang={lang}...")
-        _ = PaddleOCR(use_angle_cls=True, lang=lang)
-        print(f"Done: {lang}")
+        print(f"[preload] Initializing PaddleOCR for lang={lang} ...")
+        ocr = PaddleOCR(use_angle_cls=True, lang=lang)
+        # Trigger lazy downloads (det/rec/cls) with a tiny run
+        _ = ocr.ocr(dummy, cls=True)
+        print(f"[preload] OK: {lang}")
     except Exception as e:
-        print(f"WARN: preload failed for {lang}: {e}")
+        print(f"[preload] WARN: {lang} -> {e}")
 PY
 
 EXPOSE 7861
