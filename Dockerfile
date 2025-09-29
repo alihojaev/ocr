@@ -11,6 +11,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         python3 \
         python3-pip \
+        wget \
         ca-certificates \
         libgl1 \
         libgomp1 \
@@ -41,9 +42,33 @@ COPY rp_handler.py /workspace/rp_handler.py
 COPY start.sh /workspace/start.sh
 RUN chmod +x /workspace/start.sh
 
-# Pre-download PaddleOCR models to avoid cold-start download in serverless
-COPY preload_models.py /workspace/preload_models.py
-RUN python3 /workspace/preload_models.py && rm -f /workspace/preload_models.py
+# Pre-fetch PaddleOCR weights (det/rec/cls) to avoid cold-start downloads
+RUN bash -euxo pipefail -c '
+  ROOT=/root/.paddleocr/whl; \
+  mkdir -p "$ROOT/det/ml/Multilingual_PP-OCRv3_det_infer"; \
+  cd "$ROOT/det/ml/Multilingual_PP-OCRv3_det_infer"; \
+  wget -q --retry-connrefused --tries=3 --timeout=30 \
+    https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/Multilingual_PP-OCRv3_det_infer.tar \
+    && tar -xf Multilingual_PP-OCRv3_det_infer.tar || true; \
+  for LANG in korean en japan ch chinese_cht; do \
+    case "$LANG" in \
+      korean) REC_URL=https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/korean_PP-OCRv4_rec_infer.tar ;; \
+      en) REC_URL=https://paddleocr.bj.bcebos.com/PP-OCRv4/english/en_PP-OCRv4_rec_infer.tar ;; \
+      japan) REC_URL=https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/japan_PP-OCRv4_rec_infer.tar ;; \
+      ch) REC_URL=https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_rec_infer.tar ;; \
+      chinese_cht) REC_URL=https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese_cht/chinese_cht_PP-OCRv4_rec_infer.tar ;; \
+    esac; \
+    mkdir -p "$ROOT/rec/$LANG/${LANG}_PP-OCRv4_rec_infer"; \
+    cd "$ROOT/rec/$LANG/${LANG}_PP-OCRv4_rec_infer"; \
+    wget -q --retry-connrefused --tries=3 --timeout=30 "$REC_URL" \
+      && tar -xf "$(basename "$REC_URL")" || true; \
+  done; \
+  mkdir -p "$ROOT/cls/ch_ppocr_mobile_v2.0_cls_infer"; \
+  cd "$ROOT/cls/ch_ppocr_mobile_v2.0_cls_infer"; \
+  wget -q --retry-connrefused --tries=3 --timeout=30 \
+    https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar \
+    && tar -xf ch_ppocr_mobile_v2.0_cls_infer.tar || true \
+'
 
 EXPOSE 7861
 
