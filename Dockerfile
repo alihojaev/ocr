@@ -42,32 +42,8 @@ COPY start.sh /workspace/start.sh
 RUN chmod +x /workspace/start.sh
 
 # Pre-download PaddleOCR models to avoid cold-start download in serverless
-RUN set -e \
- && cat > /tmp/preload_ocr.py <<'PY' \
- && python3 /tmp/preload_ocr.py \
- && rm -f /tmp/preload_ocr.py
-from paddleocr import PaddleOCR
-import numpy as np, time
-
-langs = ["japan", "korean", "ch", "chinese_cht", "en"]
-dummy = np.zeros((64, 64, 3), dtype=np.uint8)
-
-def ensure(lang: str, tries: int = 3):
-    for i in range(1, tries+1):
-        try:
-            print(f"[preload] ({i}/{tries}) lang={lang} init...")
-            ocr = PaddleOCR(use_angle_cls=True, lang=lang, ocr_version='PP-OCRv4')
-            _ = ocr.ocr(dummy, cls=True)  # trigger download of det/rec/cls
-            print(f"[preload] OK: {lang}")
-            return True
-        except Exception as e:
-            print(f"[preload] WARN {lang}: {e}")
-            time.sleep(3)
-    return False
-
-for lang in langs:
-    ensure(lang)
-PY
+COPY preload_models.py /workspace/preload_models.py
+RUN python3 /workspace/preload_models.py && rm -f /workspace/preload_models.py
 
 EXPOSE 7861
 
