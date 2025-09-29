@@ -1,4 +1,5 @@
-FROM nvidia/cuda:12.6.2-cudnn9-runtime-ubuntu22.04
+# Some registries don't yet mirror 12.6.2. Use widely available 12.6.1 tag.
+FROM nvidia/cuda:12.6.1-cudnn9-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
