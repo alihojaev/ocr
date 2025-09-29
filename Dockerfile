@@ -1,5 +1,5 @@
-# Some registries don't yet mirror 12.6.2. Use widely available 12.6.1 tag.
-FROM nvidia/cuda:12.6.1-cudnn9-runtime-ubuntu22.04
+# Switch to widely available CUDA 11.8 runtime (compatible wheel exists: cu118)
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
@@ -26,9 +26,9 @@ WORKDIR /workspace
 ENV PIP_NO_CACHE_DIR=1
 RUN python3 -m pip install --upgrade pip setuptools wheel
 
-# Install PaddlePaddle GPU build (CUDA 12.6) per docs
+# Install PaddlePaddle GPU build for CUDA 11.8 per docs
 # https://www.paddleocr.ai/latest/en/version3.x/installation.html
-RUN python3 -m pip install --no-cache-dir paddlepaddle-gpu==3.0.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu126/
+RUN python3 -m pip install --no-cache-dir paddlepaddle-gpu==3.0.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu118/
 
 # Copy requirements and install remaining deps
 COPY requirements.txt /workspace/requirements.txt
