@@ -42,7 +42,10 @@ COPY start.sh /workspace/start.sh
 RUN chmod +x /workspace/start.sh
 
 # Pre-download PaddleOCR models to avoid cold-start download in serverless
-RUN python3 - <<'PY'
+RUN set -e \
+ && cat > /tmp/preload_ocr.py <<'PY' \
+ && python3 /tmp/preload_ocr.py \
+ && rm -f /tmp/preload_ocr.py
 from paddleocr import PaddleOCR
 import numpy as np, time
 
