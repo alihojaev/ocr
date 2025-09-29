@@ -43,7 +43,7 @@ COPY start.sh /workspace/start.sh
 RUN chmod +x /workspace/start.sh
 
 # Pre-fetch PaddleOCR weights (det/rec/cls) to avoid cold-start downloads
-RUN bash -euxo pipefail -c '
+RUN bash -euxo pipefail -c '\
   ROOT=/root/.paddleocr/whl; \
   mkdir -p "$ROOT/det/ml/Multilingual_PP-OCRv3_det_infer"; \
   cd "$ROOT/det/ml/Multilingual_PP-OCRv3_det_infer"; \
