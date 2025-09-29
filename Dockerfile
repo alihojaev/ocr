@@ -41,6 +41,19 @@ COPY rp_handler.py /workspace/rp_handler.py
 COPY start.sh /workspace/start.sh
 RUN chmod +x /workspace/start.sh
 
+# Pre-download PaddleOCR models to avoid cold-start download in serverless
+RUN python3 - << 'PY'
+from paddleocr import PaddleOCR
+langs = ["korean", "en"]
+for lang in langs:
+    try:
+        print(f"Preloading PaddleOCR models for lang={lang}...")
+        _ = PaddleOCR(use_angle_cls=True, lang=lang)
+        print(f"Done: {lang}")
+    except Exception as e:
+        print(f"WARN: preload failed for {lang}: {e}")
+PY
+
 EXPOSE 7861
 
 CMD ["/workspace/start.sh"]
